@@ -1,6 +1,6 @@
 import os
 from dagster import asset, Config
-from langchain_community.document_loaders import DirectoryLoader, TextLoader
+from langchain_community.document_loaders import ObsidianLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
@@ -14,7 +14,7 @@ class IngestionConfig(Config):
 @asset
 def raw_documents(config: IngestionConfig):
     """Load documents from a local directory."""
-    loader = DirectoryLoader(config.source_dir, glob="**/*.md", loader_cls=TextLoader)
+    loader = ObsidianLoader(config.source_dir)
     docs = loader.load()
     print(f"Loaded {len(docs)} documents.")
     return docs
