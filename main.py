@@ -40,14 +40,31 @@ async def ask_question(request: QueryRequest):
         qa_chain = RetrievalQA.from_chain_type(
             llm=llm,
             chain_type="stuff", # 'Stuff' simply pushes all retrieved docs into the prompt
-            retriever=vector_db.as_retriever(search_kwargs={"k": 10})
+            retriever=vector_db.as_retriever(search_kwargs={"k": 10}),
+            return_source_documents=True
         )
 
+        # The response is now a dictionary, not just a string
         response = qa_chain.invoke(request.question)
-        return {"answer": response["result"]}
+        answer = response["result"]
+
+        # 'source_documents' is a list of Document objects
+        sources = [
+            {
+                "content": doc.page_content[:200], # Preview of what was read
+                "metadata": doc.metadata           # File path, tags, etc.
+            }
+            for doc in response["source_documents"]
+        ]
+
+        return {
+            "answer": answer,
+            "sources": sources
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     import uvicorn
