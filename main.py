@@ -4,6 +4,7 @@ from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.llms import Ollama
 from langchain_classic.chains import RetrievalQA, ConversationalRetrievalChain
+from langchain_core.prompts import PromptTemplate
 
 app = FastAPI(title="Production RAG API")
 
@@ -24,11 +25,31 @@ llm = Ollama(
     base_url="http://localhost:11434" # Ensure no trailing slash
 )
 
+_QA_PROMPT = PromptTemplate(
+    input_variables=["context", "question"],
+    template=(
+        "You are a Personal Knowledge Assistant. The context "
+        "provided below consists of my personal thoughts, notes, "
+        "and documentation from my private Obsidian vault.\n\n"
+        "When answering:\n"
+        "1. Refer to me as \"you\" and to the notes as "
+        "\"your notes\" or \"your thoughts.\"\n"
+        "2. Never refer to the author as \"the individual\" "
+        "or \"the user.\"\n"
+        "3. If the notes say \"I should do X,\" your answer "
+        "should be \"You noted that you should do X.\"\n\n"
+        "Context:\n{context}\n\n"
+        "Question: {question}\n"
+        "Answer:"
+    ),
+)
+
 chat_chain = ConversationalRetrievalChain.from_llm(
     llm=llm,
     retriever=vector_db.as_retriever(search_kwargs={"k": 10}),
     chain_type="stuff",
     return_source_documents=True,
+    combine_docs_chain_kwargs={"prompt": _QA_PROMPT},
 )
 
 class QueryRequest(BaseModel):
