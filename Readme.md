@@ -5,6 +5,8 @@ Obsidian PKM vault using a local LLM. All data stays on-device.
 
 > Project ideation: [Google Gemini Pro session](https://gemini.google.com/app/89e20025d1622a80)
 
+![Black Oracle TUI](screenshot-chat.png)
+
 ---
 
 ## How it works
