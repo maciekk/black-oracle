@@ -43,3 +43,13 @@ $ source .venv/bin/activate
 $ pip install langchain-chroma langchain-huggingface langchain-community dagster dagster-webserver fastapi uvicorn sentence-transformers
 ```
 
+
+Hitting 404 on the inferenec server.
+
+$ ollama list
+
+Ah, no models.
+
+-> $ ollama pull llama3
+
+gt
