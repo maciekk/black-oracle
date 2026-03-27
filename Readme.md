@@ -134,3 +134,5 @@ LangChain functionality.
 - **Migrate off `langchain_classic`**: `langchain_classic` is a compatibility shim for pre-v1.0 LangChain APIs. Migrating to LCEL (LangChain Expression Language) pipelines would restore active maintenance, improve composability, and unlock async streaming out of the box.
 
 - **Structured error handling**: Both endpoints catch all exceptions and return HTTP 500 with `str(e)`. ChromaDB connection failures, Ollama timeouts, and malformed inputs should produce distinct status codes and be logged separately.
+
+- **Smaller, more focused chunks**: The current 1000-char chunk size often spans multiple ideas. Reducing to ~400–500 chars with proportionally less overlap tends to produce tighter, more on-topic retrieval matches. Requires re-ingestion.

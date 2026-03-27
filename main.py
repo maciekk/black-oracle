@@ -40,7 +40,15 @@ _QA_PROMPT = PromptTemplate(
     ),
 )
 
-_retriever = vector_db.as_retriever(search_kwargs={"k": config.RETRIEVER_K})
+if config.RETRIEVER_SEARCH_TYPE == "mmr":
+    _retriever_kwargs = {"k": config.RETRIEVER_K, "fetch_k": config.RETRIEVER_FETCH_K}
+else:
+    _retriever_kwargs = {"k": config.RETRIEVER_K, "score_threshold": config.RETRIEVER_SCORE_THRESHOLD}
+
+_retriever = vector_db.as_retriever(
+    search_type=config.RETRIEVER_SEARCH_TYPE,
+    search_kwargs=_retriever_kwargs,
+)
 
 ask_chain = RetrievalQA.from_chain_type(
     llm=llm,

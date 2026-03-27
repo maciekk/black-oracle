@@ -278,6 +278,12 @@ class OracleApp(App):
         sources_panel = self.query_one("#sources", SourcesPanel)
         thinking = self.query_one("#thinking", ThinkingIndicator)
 
+        if question == "/clear":
+            self.chat_history.clear()
+            chat.clear()
+            sources_panel.load([])
+            return
+
         chat.add_user(question)
         thinking.start()
 
