@@ -24,12 +24,15 @@ python main.py
 # Test vector DB retrieval directly
 python test_retrieval.py
 
-# Test inference API
+# Test inference API (single-shot)
 bash test_inference.sh
 # or manually:
 curl -X POST "http://localhost:8000/ask" \
      -H "Content-Type: application/json" \
      -d '{"question": "Your question here"}'
+
+# Interactive conversational chat (maintains history across turns)
+bash test_chat.sh
 ```
 
 ## External Dependencies
@@ -47,10 +50,13 @@ Dagster asset graph with three assets:
 - `vector_store`: Embeds with `HuggingFaceEmbeddings(all-MiniLM-L6-v2)` and stores in ChromaDB
 
 ### main.py
-FastAPI app with single endpoint `POST /ask`:
-- Loads same ChromaDB collection and embeddings model as ingestion
-- Retrieves top 10 relevant chunks (k=10)
-- Uses LangChain `load_qa_chain` with Ollama (`llama3`) to generate answers
+FastAPI app with two endpoints:
+- `POST /ask`: stateless single-shot RAG query using `RetrievalQA`
+- `POST /chat`: conversational RAG using `ConversationalRetrievalChain`;
+  accepts `chat_history` (list of `[human, ai]` pairs) for multi-turn context;
+  uses a custom `_QA_PROMPT` that instructs the model to act as a Personal
+  Knowledge Assistant and address the user in second person
+- Retrieves top 10 relevant chunks (k=10) for both endpoints
 - Uses `langchain_classic.chains` due to LangChain v1.0 API breaking changes
 
 ## LangChain Version Note

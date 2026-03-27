@@ -1,55 +1,120 @@
-## Random Notes
+# Black Oracle
 
-Project ideation done in Google Gemini Pro.
-Src: https://gemini.google.com/app/89e20025d1622a80
+A local RAG (Retrieval-Augmented Generation) system for querying a personal
+Obsidian PKM vault using a local LLM. All data stays on-device.
 
-Potential quick way to bring up all the infra:
+> Project ideation: [Google Gemini Pro session](https://gemini.google.com/app/89e20025d1622a80)
 
+---
+
+## How it works
+
+1. **Ingestion** (run once, or when notes change): A Dagster pipeline loads
+   all `.md` files from the vault, splits them into chunks, embeds them with
+   HuggingFace, and stores the vectors in ChromaDB.
+
+2. **Inference** (run anytime): A FastAPI server retrieves relevant chunks
+   from ChromaDB and generates answers via a local Ollama model.
+
+---
+
+## Prerequisites
+
+- [Ollama](https://ollama.com) installed and running
+- Python 3.11+
+- `./data` symlinked to your Obsidian vault (directory of `.md` files)
+
+Pull the LLM model before first use:
+
+```bash
+ollama pull llama3
 ```
-# Start a vector database and an LLM server
+
+### Alternative: Docker-based infrastructure
+
+Instead of running Ollama and ChromaDB natively, you can bring them up with
+Docker:
+
+```bash
 docker run -d -p 8000:8000 chromadb/chroma
 docker run -d -v ollama:/root/.ollama -p 11434:11434 ollama/ollama
 ```
 
-### Ingestion piece:
+---
 
-```
-$ pip install dagster dagster-webserver langchain langchain-chroma langchain-huggingface langchain-community unstructured
-$ dagster dev -f ingestion_pipeline.py
-bring up browser on localhost:3000
--> Lineage -> Materialize all
-hit error on last box, `vector_store`
-ah, need: pip install sentence-transformers
-```
+## Setup
 
-
-Success
-
-### Inference
-In order to run `main.py`, needed:
-  `pip install fastapi`
-
-Ugh, also:
-	`pip install langchain-classic`
-and then modify `main.py` to use:
-	`from langchain_classic.chains import ...`
-
-This has to do with some sort of LangChain API changes as of 1.0...
-
-Ah, crud, and one of the recent changes made us hit "this Python is externally managed", so need to use venv:
-```
-$ python -m venv .venv
-$ source .venv/bin/activate
-$ pip install langchain-chroma langchain-huggingface langchain-community dagster dagster-webserver fastapi uvicorn sentence-transformers
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install langchain-chroma langchain-huggingface langchain-community \
+            langchain-classic dagster dagster-webserver \
+            fastapi uvicorn sentence-transformers
 ```
 
+---
 
-Hitting 404 on the inferenec server.
+## Usage
 
-$ ollama list
+### 1. Ingest your vault
 
-Ah, no models.
+```bash
+dagster dev -f ingestion_pipeline.py
+```
 
--> $ ollama pull llama3
+Open [localhost:3000](http://localhost:3000), go to **Lineage**, and click
+**Materialize All**. This populates ChromaDB at `./chroma_db/`. Re-run
+whenever your notes change significantly.
 
-gt
+### 2. Start the inference server
+
+```bash
+python main.py
+```
+
+Server runs at [localhost:8000](http://localhost:8000).
+
+### 3. Query
+
+**Single-shot (non-conversational):**
+
+```bash
+bash test_inference.sh
+# or manually:
+curl -X POST "http://localhost:8000/ask" \
+     -H "Content-Type: application/json" \
+     -d '{"question": "Your question here"}'
+```
+
+**Conversational chat (maintains history across turns):**
+
+```bash
+bash test_chat.sh
+```
+
+Type `quit` or press Ctrl+C to exit. After each answer, you will be prompted
+to optionally show the source documents that informed the response.
+
+---
+
+## Architecture
+
+| File | Role |
+|---|---|
+| `ingestion_pipeline.py` | Dagster pipeline: load → chunk → embed → store in ChromaDB |
+| `main.py` | FastAPI server: `/ask` (stateless) and `/chat` (conversational) endpoints |
+| `test_inference.sh` | Single-shot CLI query tool |
+| `test_chat.sh` | Interactive multi-turn chat loop |
+| `test_retrieval.py` | Direct ChromaDB retrieval test (no LLM) |
+
+### Endpoints
+
+- `POST /ask` — stateless RAG query; returns `answer` + `sources`
+- `POST /chat` — conversational RAG; accepts `question` and
+  `chat_history` (`[[human, ai], ...]`); returns `answer` + `sources`
+
+### LangChain version note
+
+This project uses `langchain_classic.chains` (not `langchain.chains`) due to
+breaking API changes in LangChain v1.0. Keep this in mind when adding new
+LangChain functionality.
