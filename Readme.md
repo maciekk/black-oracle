@@ -49,7 +49,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install langchain-chroma langchain-huggingface langchain-community \
             langchain-classic dagster dagster-webserver \
-            fastapi uvicorn sentence-transformers
+            fastapi uvicorn sentence-transformers rich textual
 ```
 
 ---
@@ -89,11 +89,10 @@ curl -X POST "http://localhost:8000/ask" \
 **Conversational chat (maintains history across turns):**
 
 ```bash
-bash test_chat.sh
+python chat.py
 ```
 
-Type `quit` or press Ctrl+C to exit. After each answer, you will be prompted
-to optionally show the source documents that informed the response.
+Press `Ctrl+S` to toggle source previews in the right-hand panel. Ctrl+C to exit.
 
 ---
 
@@ -104,7 +103,7 @@ to optionally show the source documents that informed the response.
 | `ingestion_pipeline.py` | Dagster pipeline: load → chunk → embed → store in ChromaDB |
 | `main.py` | FastAPI server: `/ask` (stateless) and `/chat` (conversational) endpoints |
 | `test_inference.sh` | Single-shot CLI query tool |
-| `test_chat.sh` | Interactive multi-turn chat loop |
+| `chat.py` | Interactive multi-turn chat UI (uses `rich` for formatting) |
 | `test_retrieval.py` | Direct ChromaDB retrieval test (no LLM) |
 
 ### Endpoints
