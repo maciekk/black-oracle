@@ -71,6 +71,7 @@ whenever your notes change significantly.
 ### 2. Start the inference server
 
 ```bash
+source .venv/bin/activate
 python main.py
 ```
 

@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.llms import Ollama
+from langchain_ollama import OllamaLLM
 from langchain_classic.chains import RetrievalQA, ConversationalRetrievalChain
 from langchain_core.prompts import PromptTemplate
 
@@ -16,12 +16,8 @@ vector_db = Chroma(
     collection_name="local_docs"
 )
 
-# Use a local model (e.g., llama3 or mistral)
-# MacOS form
-#llm = Ollama(model="llama3")
-# Linux form
-llm = Ollama(
-    model="llama3", 
+llm = OllamaLLM(
+    model="llama3",
     base_url="http://localhost:11434" # Ensure no trailing slash
 )
 
