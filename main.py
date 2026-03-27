@@ -5,20 +5,20 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_ollama import OllamaLLM
 from langchain_classic.chains import RetrievalQA, ConversationalRetrievalChain
 from langchain_core.prompts import PromptTemplate
+import config
 
 app = FastAPI(title="Production RAG API")
 
-# Setup: This should ideally be a singleton or dependency in FastAPI
-embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+embeddings = HuggingFaceEmbeddings(model_name=config.EMBEDDING_MODEL)
 vector_db = Chroma(
-    persist_directory="./chroma_db", 
+    persist_directory=config.CHROMA_PERSIST_DIR,
     embedding_function=embeddings,
-    collection_name="local_docs"
+    collection_name=config.CHROMA_COLLECTION_NAME,
 )
 
 llm = OllamaLLM(
-    model="llama3",
-    base_url="http://localhost:11434" # Ensure no trailing slash
+    model=config.OLLAMA_MODEL,
+    base_url=config.OLLAMA_BASE_URL,
 )
 
 _QA_PROMPT = PromptTemplate(
@@ -40,9 +40,18 @@ _QA_PROMPT = PromptTemplate(
     ),
 )
 
+_retriever = vector_db.as_retriever(search_kwargs={"k": config.RETRIEVER_K})
+
+ask_chain = RetrievalQA.from_chain_type(
+    llm=llm,
+    chain_type="stuff",
+    retriever=_retriever,
+    return_source_documents=True,
+)
+
 chat_chain = ConversationalRetrievalChain.from_llm(
     llm=llm,
-    retriever=vector_db.as_retriever(search_kwargs={"k": 10}),
+    retriever=_retriever,
     chain_type="stuff",
     return_source_documents=True,
     combine_docs_chain_kwargs={"prompt": _QA_PROMPT},
@@ -64,16 +73,7 @@ async def ask_question(request: QueryRequest):
     3. Generate response via Ollama.
     """
     try:
-        # Create a chain that handles the retrieval and prompt augmentation
-        qa_chain = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff", # 'Stuff' simply pushes all retrieved docs into the prompt
-            retriever=vector_db.as_retriever(search_kwargs={"k": 10}),
-            return_source_documents=True
-        )
-
-        # The response is now a dictionary, not just a string
-        response = qa_chain.invoke(request.question)
+        response = ask_chain.invoke(request.question)
         answer = response["result"]
 
         # 'source_documents' is a list of Document objects

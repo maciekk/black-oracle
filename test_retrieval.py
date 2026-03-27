@@ -1,14 +1,12 @@
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
+import config
 
-# 1. Initialize the exact same embedding model used in your Dagster pipeline
-embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-
-# 2. Point to your generated database
+embeddings = HuggingFaceEmbeddings(model_name=config.EMBEDDING_MODEL)
 vector_db = Chroma(
-    persist_directory="./chroma_db", 
+    persist_directory=config.CHROMA_PERSIST_DIR,
     embedding_function=embeddings,
-    collection_name="local_docs"
+    collection_name=config.CHROMA_COLLECTION_NAME,
 )
 
 def run_test(query):

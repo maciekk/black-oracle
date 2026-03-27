@@ -120,3 +120,17 @@ Press `Ctrl+S` to toggle source previews in the right-hand panel. Ctrl+C to exit
 This project uses `langchain_classic.chains` (not `langchain.chains`) due to
 breaking API changes in LangChain v1.0. Keep this in mind when adding new
 LangChain functionality.
+
+---
+
+## Future Potential Work
+
+- **Server-side conversation state**: The `/chat` endpoint requires the client to send the full `chat_history` on every turn. A session-keyed store with a max-history limit would offload that burden and prevent unbounded prompt growth.
+
+- **Incremental ingestion**: The Dagster pipeline rebuilds the entire ChromaDB collection on every run. An upsert strategy — hashing chunks by `(source, start_index)` and only embedding new/changed ones — would make re-ingestion practical for large or frequently-updated vaults.
+
+- **Token budget guard for `k=10`**: Stuffing 10 chunks into the prompt can overflow the LLM's context window on long documents. Either add a dynamic token budget check or switch to a `map_reduce` or `refine` chain type for larger result sets.
+
+- **Migrate off `langchain_classic`**: `langchain_classic` is a compatibility shim for pre-v1.0 LangChain APIs. Migrating to LCEL (LangChain Expression Language) pipelines would restore active maintenance, improve composability, and unlock async streaming out of the box.
+
+- **Structured error handling**: Both endpoints catch all exceptions and return HTTP 500 with `str(e)`. ChromaDB connection failures, Ollama timeouts, and malformed inputs should produce distinct status codes and be logged separately.

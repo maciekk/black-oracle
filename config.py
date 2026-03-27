@@ -1,0 +1,9 @@
+OLLAMA_BASE_URL = "http://localhost:11434"
+OLLAMA_MODEL = "llama3"
+
+CHROMA_PERSIST_DIR = "./chroma_db"
+CHROMA_COLLECTION_NAME = "local_docs"
+CHROMA_SOURCE_DIR = "./data"
+
+EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+RETRIEVER_K = 10
