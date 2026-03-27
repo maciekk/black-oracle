@@ -1,0 +1,7 @@
+dagster
+dagster-webserver
+langchain
+langchain-chroma
+langchain-huggingface
+langchain-community
+pydantic
