@@ -185,51 +185,110 @@ class ChatPane(RichLog):
     }
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._messages: list[tuple[str, str]] = []  # (role, content)
+    _MAX_WIDTH = 120
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Each entry: ('intro'|'user'|'oracle'|'error', text)
+        self._messages: list[tuple[str, str]] = []
+
+    def _layout(self) -> tuple[int, str]:
+        """Return (render_width, left_pad_str) for the current pane width.
+
+        Uses scrollable_content_region.width — the exact width RichLog wraps
+        at — rather than content_size.width, which may include the scrollbar
+        gutter and cause off-by-one overflows.
+        """
+        pane_width = self.scrollable_content_region.width
+        render_width = max(65, min(self._MAX_WIDTH, pane_width))
+        pad = " " * max(0, (pane_width - render_width) // 2)
+        return render_width, pad
+
+    def _render_all(self) -> None:
+        """Clear and re-render every stored message."""
+        super().clear()
+        for kind, text in self._messages:
+            self._render_one(kind, text)
+
+    def _render_one(self, kind: str, text: str) -> None:
+        if kind == "intro":
+            self._write_intro()
+        elif kind == "user":
+            self._write_user(text)
+        elif kind == "oracle":
+            self._write_oracle(text)
+        elif kind == "error":
+            self._write_error(text)
+
+    def on_resize(self, _) -> None:
+        self._render_all()
+
+    def clear(self) -> None:
+        self._messages.clear()
+        super().clear()
+
+    # ── public add_* API ──────────────────────────────────────────────────────
+
+    def add_intro(self) -> None:
+        self._messages.append(("intro", ""))
+        self._write_intro()
 
     def add_user(self, text: str) -> None:
         self._messages.append(("user", text))
-        self._render_user(text)
+        self._write_user(text)
 
     def add_oracle(self, text: str) -> None:
         self._messages.append(("oracle", text))
-        self._render_oracle(text)
+        self._write_oracle(text)
 
     def add_error(self, text: str) -> None:
         self._messages.append(("error", text))
-        self.write(f"[bold error]Error:[/bold error] {text}")
+        self._write_error(text)
 
-    def on_resize(self, event) -> None:
-        if not self._messages:
-            return
-        self.clear()
-        for role, content in self._messages:
-            if role == "user":
-                self._render_user(content)
-            elif role == "oracle":
-                self._render_oracle(content)
-            else:
-                self.write(f"[bold error]Error:[/bold error] {content}")
+    # ── private write helpers (no storage, just render) ───────────────────────
 
-    def _render_user(self, text: str) -> None:
-        self.write(f"\n[bold cyan]You[/bold cyan]")
-        self.write(text)
+    def _write_intro(self) -> None:
+        from rich.padding import Padding
+        from rich.panel import Panel
+        from rich.text import Text
 
-    def _render_oracle(self, text: str) -> None:
+        _, pad = self._layout()
+        panel = Panel(
+            Text.assemble(
+                ("Black Oracle", "bold primary"),
+                (" — Personal Knowledge Assistant\n", ""),
+                ("Ask anything · ", "dim"),
+                ("/help", "bold dim"),
+                (" for commands · ", "dim"),
+                ("Ctrl-S", "bold dim"),
+                (" for source details · Ctrl-C to quit", "dim"),
+            ),
+            border_style="#FF7A1E",
+            expand=False,
+        )
+        self.write(Padding(panel, pad=(0, 0, 0, len(pad))))
+
+    def _write_user(self, text: str) -> None:
+        from rich.text import Text
+
+        _, pad = self._layout()
+        header = Text()
+        header.append("\n")
+        header.append(pad)
+        header.append("You", style="bold cyan")
+        self.write(header)
+        body = Text()
+        body.append(pad)
+        body.append(text)
+        self.write(body)
+
+    def _write_oracle(self, text: str) -> None:
         from rich.console import Console
         from rich.markdown import Markdown
         from rich.text import Text
 
-        MAX_WIDTH = 120
-        PREFIX = len("│ ")  # prepended to every line, must be subtracted from available width
-        pane_width = self.scrollable_content_region.width - PREFIX - 1  # -1 keeps one col gap before scrollbar
-        render_width = max(65, min(MAX_WIDTH, pane_width))
-        left_pad = max(0, (pane_width - render_width) // 2)
-        pad = " " * left_pad
-
-        tmp = Console(width=render_width, highlight=False)
+        render_width, pad = self._layout()
+        tmp = Console(width=render_width - 2, highlight=False)  # reserve 2 cols for "│ " prefix
         with tmp.capture() as cap:
             tmp.print(Markdown(text))
         rendered = cap.get().rstrip()
@@ -246,6 +305,9 @@ class ChatPane(RichLog):
             t.append("│ ", style=BAR)
             t.append_text(Text.from_ansi(line))
             self.write(t)
+
+    def _write_error(self, text: str) -> None:
+        self.write(f"[bold error]Error:[/bold error] {text}")
 
 
 # ── History-aware input ───────────────────────────────────────────────────────
@@ -339,23 +401,7 @@ class OracleApp(App):
         self.register_theme(ORACLE_THEME)
         self.theme = "oracle"
         chat = self.query_one("#chat", ChatPane)
-        from rich.panel import Panel
-        from rich.text import Text
-        chat.write(
-            Panel(
-                Text.assemble(
-                    ("Black Oracle", "bold primary"),
-                    (" — Personal Knowledge Assistant\n", ""),
-                    ("Ask anything · ", "dim"),
-                    ("/help", "bold dim"),
-                    (" for commands · ", "dim"),
-                    ("Ctrl-S", "bold dim"),
-                    (" for source details · Ctrl-C to quit", "dim"),
-                ),
-                border_style="#FF7A1E",
-                expand=False,
-            )
-        )
+        self.call_after_refresh(chat.add_intro)
         self.query_one("#question", HistoryInput).focus()
 
     def compose(self) -> ComposeResult:
