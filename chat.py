@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Black Oracle — Textual TUI chat client."""
 
+import subprocess
 import threading
 
 import requests
@@ -225,12 +226,14 @@ class OracleApp(App):
 
     BINDINGS = [
         Binding("ctrl+s", "show_sources", "Source details"),
+        Binding("ctrl+y", "copy_last", "Copy last answer"),
         Binding("ctrl+c", "quit", "Quit", priority=True),
     ]
 
     def __init__(self):
         super().__init__()
         self.chat_history: list[list[str]] = []
+        self._last_answer: str = ""
 
     def on_mount(self) -> None:
         self.register_theme(ORACLE_THEME)
@@ -262,6 +265,20 @@ class OracleApp(App):
         with Vertical(id="input-bar"):
             yield Input(placeholder="Ask the Oracle…", id="question")
         yield Footer()
+
+    def action_copy_last(self) -> None:
+        if not self._last_answer:
+            self.notify("Nothing to copy yet.", severity="warning")
+            return
+        try:
+            subprocess.run(["wl-copy"], input=self._last_answer, text=True, check=True)
+            self.notify("Copied to clipboard.")
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            try:
+                subprocess.run(["xclip", "-selection", "clipboard"], input=self._last_answer, text=True, check=True)
+                self.notify("Copied to clipboard.")
+            except (FileNotFoundError, subprocess.CalledProcessError) as e:
+                self.notify(f"Copy failed: {e}", severity="error")
 
     def action_show_sources(self) -> None:
         sources = self.query_one("#sources", SourcesPanel).sources
@@ -300,6 +317,7 @@ class OracleApp(App):
 
             answer = data.get("answer", "")
             raw_sources = data.get("sources", [])
+            self._last_answer = answer
             self.call_from_thread(thinking.stop)
             self.call_from_thread(chat.add_oracle, answer)
             self.call_from_thread(sources_panel.load, raw_sources)
