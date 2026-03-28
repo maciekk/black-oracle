@@ -88,32 +88,33 @@ pip install langchain-chroma langchain-huggingface langchain-community \
 
 ## Cold start
 
-Run these steps in order when starting from scratch on a new session or machine.
-
-**First time only** — pull the model once; it persists in `~/.ollama/models/` across reboots:
-
-```bash
-ollama pull llama3
-```
-
-**Every session:**
+`cold-start.sh` brings up the full serving stack (Ollama + FastAPI) in the
+background and exits once everything is healthy. All service output is
+redirected to `/tmp/` — you don't need to keep the terminal open.
 
 ```bash
-# 1. Start Ollama (if not already running as a service)
-ollama serve &
-
-# 2. Verify the model is present
-ollama list   # should show llama3
-
-# 3. Activate the virtualenv
-source .venv/bin/activate
-
-# 4. Start the inference server
-python main.py
+./cold-start.sh
 ```
 
-ChromaDB is file-based (`./chroma_db/`) and needs no separate service. Re-run
-the ingestion step (below) only when your vault notes have changed.
+Then, in the same terminal (or any other):
+
+```bash
+python chat.py
+```
+
+If you also need to re-ingest your vault (first run, or after notes have
+changed), add `--dagster` to start the Dagster UI too:
+
+```bash
+./cold-start.sh --dagster
+# open http://localhost:3000 → Lineage → Materialize All
+# then: python chat.py
+```
+
+The script is idempotent — safe to re-run if services are already up. Logs
+land in `/tmp/black-oracle-api.log` and `/tmp/black-oracle-dagster.log`.
+
+ChromaDB is file-based (`./chroma_db/`) and needs no separate service.
 
 ---
 
@@ -132,11 +133,10 @@ whenever your notes change significantly.
 ### 2. Start the inference server
 
 ```bash
-source .venv/bin/activate
-python main.py
+./cold-start.sh
 ```
 
-Server runs at [localhost:8000](http://localhost:8000).
+Server runs at [localhost:8000](http://localhost:8000). See [Cold start](#cold-start) above for details.
 
 ### 3. Query
 
