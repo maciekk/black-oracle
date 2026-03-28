@@ -284,6 +284,7 @@ class OracleApp(App):
     """
 
     BINDINGS = [
+        Binding("ctrl+p", "command_palette", "Palette"),
         Binding("ctrl+s", "show_sources", "Source details"),
         Binding("ctrl+y", "copy_last", "Copy last answer"),
         Binding("ctrl+c", "quit", "Quit", priority=True),

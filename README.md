@@ -158,6 +158,11 @@ python chat.py
 
 Press `Ctrl+S` to toggle source previews in the right-hand panel. Ctrl+C to exit.
 
+> **Selecting and copying text:** Textual captures mouse events, so normal
+> click-to-select doesn't work. Hold **Shift** while clicking and dragging to
+> pass mouse events through to the terminal and select text the usual way.
+> See the [Textual FAQ](https://textual.textualize.io/FAQ/#how-can-i-select-and-copy-text-in-a-textual-app) for details.
+
 ---
 
 ## Components
