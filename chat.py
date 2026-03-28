@@ -4,8 +4,10 @@
 import re
 import subprocess
 import threading
+from pathlib import Path
 
 import requests
+from textual import events
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.reactive import reactive
@@ -13,6 +15,8 @@ from textual.screen import ModalScreen
 from textual.theme import Theme
 from textual.widget import Widget
 from textual.widgets import Footer, Input, RichLog, Static
+
+HISTORY_FILE = Path.home() / ".local" / "share" / "black-oracle" / "history"
 
 ENDPOINT = "http://localhost:8000/chat"
 
@@ -205,6 +209,53 @@ class ChatPane(RichLog):
         self.write(f"[bold error]Error:[/bold error] {text}")
 
 
+# ── History-aware input ───────────────────────────────────────────────────────
+
+class HistoryInput(Input):
+    """Input widget with Up/Down history navigation, persisted across runs."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._history: list[str] = []
+        self._history_index: int = 0
+        self._saved_value: str = ""
+        self._load_history()
+
+    def _load_history(self) -> None:
+        if HISTORY_FILE.exists():
+            self._history = [l for l in HISTORY_FILE.read_text().splitlines() if l.strip()]
+        self._history_index = len(self._history)
+
+    def save_entry(self, text: str) -> None:
+        """Append a new entry and reset the navigation cursor."""
+        self._history.append(text)
+        self._history_index = len(self._history)
+        self._saved_value = ""
+        HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with HISTORY_FILE.open("a") as f:
+            f.write(text + "\n")
+
+    def on_key(self, event: events.Key) -> None:
+        if event.key == "up":
+            event.prevent_default()
+            if self._history and self._history_index > 0:
+                if self._history_index == len(self._history):
+                    self._saved_value = self.value
+                self._history_index -= 1
+                self.value = self._history[self._history_index]
+                self.cursor_position = len(self.value)
+        elif event.key == "down":
+            event.prevent_default()
+            if self._history_index < len(self._history):
+                self._history_index += 1
+                self.value = (
+                    self._saved_value
+                    if self._history_index == len(self._history)
+                    else self._history[self._history_index]
+                )
+                self.cursor_position = len(self.value)
+
+
 # ── Main app ──────────────────────────────────────────────────────────────────
 
 class OracleApp(App):
@@ -262,7 +313,7 @@ class OracleApp(App):
                 expand=False,
             )
         )
-        self.query_one("#question", Input).focus()
+        self.query_one("#question", HistoryInput).focus()
 
     def compose(self) -> ComposeResult:
         from textual.containers import Horizontal, Vertical
@@ -271,7 +322,7 @@ class OracleApp(App):
             yield SourcesPanel(id="sources")
         yield ThinkingIndicator(id="thinking")
         with Vertical(id="input-bar"):
-            yield Input(placeholder="Ask the Oracle…", id="question")
+            yield HistoryInput(placeholder="Ask the Oracle…", id="question")
         yield Footer()
 
     def action_copy_last(self) -> None:
@@ -309,6 +360,7 @@ class OracleApp(App):
             sources_panel.load([])
             return
 
+        self.query_one("#question", HistoryInput).save_entry(question)
         chat.add_user(question)
         thinking.start()
 
