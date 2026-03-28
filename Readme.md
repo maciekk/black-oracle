@@ -56,6 +56,37 @@ pip install langchain-chroma langchain-huggingface langchain-community \
 
 ---
 
+## Cold start
+
+Run these steps in order when starting from scratch on a new session or machine.
+
+**First time only** — pull the model once; it persists in `~/.ollama/models/` across reboots:
+
+```bash
+ollama pull llama3
+```
+
+**Every session:**
+
+```bash
+# 1. Start Ollama (if not already running as a service)
+ollama serve &
+
+# 2. Verify the model is present
+ollama list   # should show llama3
+
+# 3. Activate the virtualenv
+source .venv/bin/activate
+
+# 4. Start the inference server
+python main.py
+```
+
+ChromaDB is file-based (`./chroma_db/`) and needs no separate service. Re-run
+the ingestion step (below) only when your vault notes have changed.
+
+---
+
 ## Usage
 
 ### 1. Ingest your vault
