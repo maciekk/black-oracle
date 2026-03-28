@@ -15,5 +15,11 @@ dependencies = [
     "langchain-ollama>=1.0.1",
     "onnxruntime<1.20",
     "pydantic>=2.12.5",
+    "sentence-transformers>=4.1.0",
     "uvicorn>=0.42.0",
+]
+
+[tool.uv]
+required-environments = [
+    "sys_platform == 'darwin' and platform_machine == 'x86_64'",
 ]
