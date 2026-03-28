@@ -185,17 +185,46 @@ class ChatPane(RichLog):
     }
     """
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._messages: list[tuple[str, str]] = []  # (role, content)
+
     def add_user(self, text: str) -> None:
+        self._messages.append(("user", text))
+        self._render_user(text)
+
+    def add_oracle(self, text: str) -> None:
+        self._messages.append(("oracle", text))
+        self._render_oracle(text)
+
+    def add_error(self, text: str) -> None:
+        self._messages.append(("error", text))
+        self.write(f"[bold error]Error:[/bold error] {text}")
+
+    def on_resize(self, event) -> None:
+        if not self._messages:
+            return
+        self.clear()
+        for role, content in self._messages:
+            if role == "user":
+                self._render_user(content)
+            elif role == "oracle":
+                self._render_oracle(content)
+            else:
+                self.write(f"[bold error]Error:[/bold error] {content}")
+
+    def _render_user(self, text: str) -> None:
         self.write(f"\n[bold cyan]You[/bold cyan]")
         self.write(text)
 
-    def add_oracle(self, text: str) -> None:
+    def _render_oracle(self, text: str) -> None:
         from rich.console import Console
         from rich.markdown import Markdown
         from rich.text import Text
 
         MAX_WIDTH = 120
-        pane_width = self.content_size.width
+        PREFIX = len("│ ")  # prepended to every line, must be subtracted from available width
+        pane_width = self.scrollable_content_region.width - PREFIX - 1  # -1 keeps one col gap before scrollbar
         render_width = max(65, min(MAX_WIDTH, pane_width))
         left_pad = max(0, (pane_width - render_width) // 2)
         pad = " " * left_pad
@@ -217,9 +246,6 @@ class ChatPane(RichLog):
             t.append("│ ", style=BAR)
             t.append_text(Text.from_ansi(line))
             self.write(t)
-
-    def add_error(self, text: str) -> None:
-        self.write(f"[bold error]Error:[/bold error] {text}")
 
 
 # ── History-aware input ───────────────────────────────────────────────────────
