@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -81,6 +82,11 @@ class QueryRequest(BaseModel):
 class ChatRequest(BaseModel):
     question: str
     chat_history: list[list[str]] = []  # list of [human, ai] pairs
+
+@app.get("/")
+async def root():
+    return RedirectResponse(url="/docs")
+
 
 @app.post("/ask")
 async def ask_question(request: QueryRequest):
