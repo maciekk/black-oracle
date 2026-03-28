@@ -347,6 +347,8 @@ class OracleApp(App):
                     ("Black Oracle", "bold primary"),
                     (" — Personal Knowledge Assistant\n", ""),
                     ("Ask anything · ", "dim"),
+                    ("/help", "bold dim"),
+                    (" for commands · ", "dim"),
                     ("Ctrl-S", "bold dim"),
                     (" for source details · Ctrl-C to quit", "dim"),
                 ),
@@ -385,6 +387,28 @@ class OracleApp(App):
         if sources:
             self.push_screen(SourcesScreen(sources))
 
+    # Commands: name → (description, handler)
+    # Handler receives (chat, sources_panel) and returns True to stop processing.
+    _COMMANDS: dict = {}  # populated after class definition
+
+    def _cmd_clear(self, chat, sources_panel) -> bool:
+        self.chat_history.clear()
+        chat.clear()
+        sources_panel.load([])
+        return True
+
+    def _cmd_quit(self, chat, sources_panel) -> bool:
+        self.exit()
+        return True
+
+    def _cmd_help(self, chat, sources_panel) -> bool:
+        from rich.text import Text
+        chat.write("")
+        chat.write(Text.assemble(("│ ", BAR), ("Commands", BAR)))
+        for name, (desc, _) in sorted(OracleApp._COMMANDS.items()):
+            chat.write(Text.assemble(("│  ", BAR), (f"{name:<10}", "bold"), f"  {desc}"))
+        return True
+
     def on_input_submitted(self, event: Input.Submitted) -> None:
         question = event.value.strip()
         if not question:
@@ -395,10 +419,12 @@ class OracleApp(App):
         sources_panel = self.query_one("#sources", SourcesPanel)
         thinking = self.query_one("#thinking", ThinkingIndicator)
 
-        if question == "/clear":
-            self.chat_history.clear()
-            chat.clear()
-            sources_panel.load([])
+        if question.startswith("/"):
+            handler_entry = OracleApp._COMMANDS.get(question)
+            if handler_entry:
+                handler_entry[1](self, chat, sources_panel)
+            else:
+                chat.add_error(f"Unknown command: {question}  (try /help)")
             return
 
         self.query_one("#question", HistoryInput).save_entry(question)
@@ -425,6 +451,13 @@ class OracleApp(App):
             self.chat_history.append([question, answer])
 
         threading.Thread(target=fetch, daemon=True).start()
+
+
+OracleApp._COMMANDS = {
+    "/clear": ("Clear chat history and screen", OracleApp._cmd_clear),
+    "/help":  ("Show this help",                OracleApp._cmd_help),
+    "/quit":  ("Quit Black Oracle",             OracleApp._cmd_quit),
+}
 
 
 if __name__ == "__main__":
