@@ -95,7 +95,7 @@ redirected to `/tmp/` — you don't need to keep the terminal open.
 Then, in the same terminal (or any other):
 
 ```bash
-python chat.py
+./chat.py
 ```
 
 If you also need to re-ingest your vault (first run, or after notes have
@@ -104,7 +104,7 @@ changed), add `--dagster` to start the Dagster UI too:
 ```bash
 ./cold-start.sh --dagster
 # open http://localhost:3000 → Lineage → Materialize All
-# then: python chat.py
+# then: ./chat.py
 ```
 
 The script is idempotent — safe to re-run if services are already up. Logs
@@ -170,7 +170,7 @@ curl -X POST "http://localhost:8000/ask" \
 **Conversational chat (maintains history across turns):**
 
 ```bash
-python chat.py
+./chat.py
 ```
 
 Press `Ctrl+S` to toggle source previews in the right-hand panel. Ctrl+C to exit.

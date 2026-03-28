@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run python
 """Black Oracle — Textual TUI chat client."""
 
 import re
