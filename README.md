@@ -114,6 +114,14 @@ changed), add `--dagster` to start the Dagster UI too:
 The script is idempotent — safe to re-run if services are already up. Logs
 land in `/tmp/black-oracle-api.log` and `/tmp/black-oracle-dagster.log`.
 
+If a service fails to come up, re-run with `--debug` to see its output
+directly in the terminal instead of a log file:
+
+```bash
+./cold-start.sh --debug
+./cold-start.sh --dagster --debug
+```
+
 ChromaDB is file-based (`./chroma_db/`) and needs no separate service.
 
 ### Bring down
