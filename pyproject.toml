@@ -1,0 +1,16 @@
+[project]
+name = "black-oracle"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dagster>=1.12.21",
+    "dagster-webserver>=1.12.21",
+    "langchain>=1.2.13",
+    "langchain-chroma>=1.1.0",
+    "langchain-community>=0.4.1",
+    "langchain-huggingface>=1.2.1",
+    "onnxruntime<1.20",
+    "pydantic>=2.12.5",
+]

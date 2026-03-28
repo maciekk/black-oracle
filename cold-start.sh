@@ -58,8 +58,7 @@ if curl -sf "$API_URL/docs" >/dev/null 2>&1; then
     ok "already running"
 else
     info "starting..."
-    source "$SCRIPT_DIR/.venv/bin/activate"
-    TOKENIZERS_PARALLELISM=false python oracle.py >/tmp/black-oracle-api.log 2>&1 &
+    TOKENIZERS_PARALLELISM=false uv run python oracle.py >/tmp/black-oracle-api.log 2>&1 &
     wait_for "$API_URL/docs" "FastAPI"
 fi
 
@@ -70,8 +69,7 @@ if $WITH_DAGSTER; then
         ok "already running"
     else
         info "starting..."
-        source "$SCRIPT_DIR/.venv/bin/activate"
-        dagster dev -f ingestion_pipeline.py >/tmp/black-oracle-dagster.log 2>&1 &
+        uv run dagster dev -f ingestion_pipeline.py >/tmp/black-oracle-dagster.log 2>&1 &
         wait_for "$DAGSTER_URL" "Dagster"
     fi
 fi

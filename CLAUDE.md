@@ -12,17 +12,14 @@ Black Oracle is a RAG (Retrieval Augmented Generation) system that queries a per
 ## Development Commands
 
 ```bash
-# Activate virtual environment
-source .venv/bin/activate
-
 # Run ingestion pipeline (then open localhost:3000, materialize all assets)
-dagster dev -f ingestion_pipeline.py
+uv run dagster dev -f ingestion_pipeline.py
 
 # Run inference API server (localhost:8000)
-python oracle.py
+uv run python oracle.py
 
 # Test vector DB retrieval directly
-python test_retrieval.py
+uv run python test_retrieval.py
 
 # Test inference API (single-shot)
 bash test_inference.sh
