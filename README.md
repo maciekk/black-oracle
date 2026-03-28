@@ -77,11 +77,7 @@ docker run -d -v ollama:/root/.ollama -p 11434:11434 ollama/ollama
 ## Setup
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install langchain-chroma langchain-huggingface langchain-community \
-            langchain-classic dagster dagster-webserver \
-            fastapi uvicorn sentence-transformers rich textual
+uv sync
 ```
 
 ---
