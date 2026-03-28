@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Black Oracle — Textual TUI chat client."""
 
+import re
 import subprocess
 import threading
 
@@ -153,6 +154,13 @@ class SourcesPanel(Widget):
         for i, s in enumerate(self.sources, 1):
             path = s.get("metadata", {}).get("source", "unknown")
             name = path.split("/")[-1]
+            # Truncate to fit on one line (panel 36 wide, 2 padding, ~4 for index)
+            max_len = 28
+            if len(name) > max_len:
+                # First try stripping leading digits+underscores (e.g. "20230415_123_")
+                name = re.sub(r"^[\d_]+", "\u2026", name)
+            if len(name) > max_len:
+                name = name[:max_len - 1] + "\u2026"
             yield Static(f"[dim]{i}.[/dim] {name}", markup=True)
 
     def load(self, sources: list) -> None:
