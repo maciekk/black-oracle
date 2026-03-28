@@ -19,6 +19,7 @@ vector_db = Chroma(
 llm = OllamaLLM(
     model=config.OLLAMA_MODEL,
     base_url=config.OLLAMA_BASE_URL,
+    temperature=0,
 )
 
 _QA_PROMPT = PromptTemplate(
