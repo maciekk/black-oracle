@@ -52,14 +52,14 @@ else
     ok "llama3 pulled"
 fi
 
-# ── FastAPI / main.py ─────────────────────────────────────────────────────────
-bold "FastAPI (main.py)"
+# ── FastAPI / oracle.py ───────────────────────────────────────────────────────
+bold "FastAPI (oracle.py)"
 if curl -sf "$API_URL/docs" >/dev/null 2>&1; then
     ok "already running"
 else
     info "starting..."
     source "$SCRIPT_DIR/.venv/bin/activate"
-    TOKENIZERS_PARALLELISM=false python main.py >/tmp/black-oracle-api.log 2>&1 &
+    TOKENIZERS_PARALLELISM=false python oracle.py >/tmp/black-oracle-api.log 2>&1 &
     wait_for "$API_URL/docs" "FastAPI"
 fi
 

@@ -27,7 +27,7 @@ Obsidian PKM vault using a local LLM. All data stays on-device.
 ┌──────────────────────── INFERENCE (online) ──────────────────────────────┐
 │                                                          ▼               │
 │  ┌──────────────────┐  question   ┌────────────┐   ┌────────────┐        │
-│  │     chat.py      │────────────▶│  main.py   │──▶│  ChromaDB  │        │
+│  │     chat.py      │────────────▶│ oracle.py  │──▶│  ChromaDB  │        │
 │  │   Textual TUI    │  +history   │  FastAPI   │◀──│  (k=10)    │        │
 │  │  (chat_history)  │◀────────────│  :8000     │   └────────────┘        │
 │  └──────────────────┘  answer     │            │   ┌────────────┐        │
@@ -170,7 +170,7 @@ Press `Ctrl+S` to toggle source previews in the right-hand panel. Ctrl+C to exit
 | File | Role |
 |---|---|
 | `ingestion_pipeline.py` | Dagster pipeline: load → chunk → embed → store in ChromaDB |
-| `main.py` | FastAPI server: `/ask` (stateless) and `/chat` (conversational) endpoints |
+| `oracle.py` | FastAPI server: `/ask` (stateless) and `/chat` (conversational) endpoints |
 | `test_inference.sh` | Single-shot CLI query tool |
 | `chat.py` | Interactive multi-turn chat UI (uses `rich` for formatting) |
 | `test_retrieval.py` | Direct ChromaDB retrieval test (no LLM) |

@@ -19,7 +19,7 @@ source .venv/bin/activate
 dagster dev -f ingestion_pipeline.py
 
 # Run inference API server (localhost:8000)
-python main.py
+python oracle.py
 
 # Test vector DB retrieval directly
 python test_retrieval.py
@@ -49,7 +49,7 @@ Dagster asset graph with three assets:
 - `processed_chunks`: Splits into 1000-char chunks with 100-char overlap using `RecursiveCharacterTextSplitter`
 - `vector_store`: Embeds with `HuggingFaceEmbeddings(all-MiniLM-L6-v2)` and stores in ChromaDB
 
-### main.py
+### oracle.py
 FastAPI app with two endpoints:
 - `POST /ask`: stateless single-shot RAG query using `RetrievalQA`
 - `POST /chat`: conversational RAG using `ConversationalRetrievalChain`;
