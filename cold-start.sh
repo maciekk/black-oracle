@@ -141,4 +141,4 @@ else
     $WITH_DAGSTER && info "         /tmp/black-oracle-dagster.log"
 fi
 info ""
-info "Run: bash test_chat.sh"
+info "Run: uv run python chat.py"
