@@ -59,7 +59,7 @@ if curl -sf "$API_URL/docs" >/dev/null 2>&1; then
 else
     info "starting..."
     source "$SCRIPT_DIR/.venv/bin/activate"
-    python main.py >/tmp/black-oracle-api.log 2>&1 &
+    TOKENIZERS_PARALLELISM=false python main.py >/tmp/black-oracle-api.log 2>&1 &
     wait_for "$API_URL/docs" "FastAPI"
 fi
 
