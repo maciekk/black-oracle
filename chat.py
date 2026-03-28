@@ -194,16 +194,26 @@ class ChatPane(RichLog):
         from rich.markdown import Markdown
         from rich.text import Text
 
-        render_width = max(65, self.content_size.width)
+        MAX_WIDTH = 120
+        pane_width = self.content_size.width
+        render_width = max(65, min(MAX_WIDTH, pane_width))
+        left_pad = max(0, (pane_width - render_width) // 2)
+        pad = " " * left_pad
+
         tmp = Console(width=render_width, highlight=False)
         with tmp.capture() as cap:
             tmp.print(Markdown(text))
         rendered = cap.get().rstrip()
 
         self.write("")
-        self.write(Text.assemble(("│ ", BAR), ("Oracle", BAR)))
+        header = Text()
+        header.append(pad)
+        header.append("│ ", style=BAR)
+        header.append("Oracle", style=BAR)
+        self.write(header)
         for line in rendered.splitlines():
             t = Text()
+            t.append(pad)
             t.append("│ ", style=BAR)
             t.append_text(Text.from_ansi(line))
             self.write(t)
