@@ -138,7 +138,7 @@ class SourcesPanel(Widget):
 
     DEFAULT_CSS = """
     SourcesPanel {
-        width: 36;
+        width: 1fr;
         border-left: solid $primary-darken-2;
         padding: 0 1;
         background: $surface;
@@ -158,8 +158,8 @@ class SourcesPanel(Widget):
         for i, s in enumerate(self.sources, 1):
             path = s.get("metadata", {}).get("source", "unknown")
             name = path.split("/")[-1]
-            # Truncate to fit on one line (panel 36 wide, 2 padding, ~4 for index)
-            max_len = 28
+            # Truncate to fit on one line (panel width minus padding and index prefix)
+            max_len = max(12, self.content_size.width - 4)
             if len(name) > max_len:
                 # First try stripping leading digits+underscores (e.g. "20230415_123_")
                 name = re.sub(r"^[\d_]+", "\u2026", name)
@@ -176,6 +176,8 @@ class SourcesPanel(Widget):
 class ChatPane(RichLog):
     DEFAULT_CSS = """
     ChatPane {
+        width: 3fr;
+        min-width: 69;
         border: none;
         padding: 0 1;
         background: $background;
@@ -192,7 +194,8 @@ class ChatPane(RichLog):
         from rich.markdown import Markdown
         from rich.text import Text
 
-        tmp = Console(width=65, highlight=False)
+        render_width = max(65, self.content_size.width)
+        tmp = Console(width=render_width, highlight=False)
         with tmp.capture() as cap:
             tmp.print(Markdown(text))
         rendered = cap.get().rstrip()
@@ -268,6 +271,7 @@ class OracleApp(App):
     #body {
         layout: horizontal;
         height: 1fr;
+        min-height: 10;
     }
     #input-bar {
         height: 3;
