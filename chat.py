@@ -402,12 +402,9 @@ class OracleApp(App):
 
 
 if __name__ == "__main__":
-    import os
-    import logging
-    # Silence Python logging and redirect OS-level stderr so no stray output
+    import logging, sys
+    # Silence Python logging and redirect stderr so no stray output
     # from libraries (tokenizers, urllib3, etc.) can corrupt the Textual TUI.
     logging.disable(logging.CRITICAL)
-    _stderr_log = open("/tmp/black-oracle-chat.log", "a")
-    os.dup2(_stderr_log.fileno(), 2)
-    import sys; sys.stderr = _stderr_log
+    sys.stderr = open("/tmp/black-oracle-chat.log", "a")
     OracleApp().run()

@@ -15,5 +15,6 @@ dependencies = [
     "langchain-ollama>=1.0.1",
     "pydantic>=2.12.5",
     "sentence-transformers>=4.1.0",
+    "textual>=8.2.0",
     "uvicorn>=0.42.0",
 ]
