@@ -122,19 +122,16 @@ ChromaDB is file-based (`./chroma_db/`) and needs no separate service.
 
 ### Bring down
 
-The services run as background processes. To stop them:
-
 ```bash
-# Stop FastAPI and Dagster (if running)
-pkill -f "oracle.py" 2>/dev/null || true
-pkill -f "dagster dev" 2>/dev/null || true
-
-# Stop Ollama (only if you started it via cold-start.sh)
-pkill -f "ollama serve" 2>/dev/null || true
+./cold-start.sh --shutdown
 ```
 
-If Ollama was already running before you called `cold-start.sh`, leave it
-running — the script does not own that process.
+This stops FastAPI and Dagster. Ollama is left running by default (it may
+have been up before you called `cold-start.sh`). To stop it too:
+
+```bash
+./cold-start.sh --shutdown --ollama
+```
 
 ---
 

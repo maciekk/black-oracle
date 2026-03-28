@@ -1,6 +1,7 @@
 #!/bin/bash
-# cold-start.sh — bring up Black Oracle serving stack
+# cold-start.sh — bring up (or shut down) the Black Oracle serving stack
 # Usage: ./cold-start.sh [--dagster] [--debug]
+#        ./cold-start.sh --shutdown [--ollama]
 
 set -euo pipefail
 
@@ -10,11 +11,31 @@ API_URL="http://localhost:8000"
 DAGSTER_URL="http://localhost:3000"
 WITH_DAGSTER=false
 DEBUG=false
+SHUTDOWN=false
+SHUTDOWN_OLLAMA=false
 
 for arg in "$@"; do
-    [[ "$arg" == "--dagster" ]] && WITH_DAGSTER=true
-    [[ "$arg" == "--debug" ]] && DEBUG=true
+    [[ "$arg" == "--dagster" ]]  && WITH_DAGSTER=true
+    [[ "$arg" == "--debug" ]]    && DEBUG=true
+    [[ "$arg" == "--shutdown" ]] && SHUTDOWN=true
+    [[ "$arg" == "--ollama" ]]   && SHUTDOWN_OLLAMA=true
 done
+
+# ── Shutdown ──────────────────────────────────────────────────────────────────
+if $SHUTDOWN; then
+    bold() { printf "\033[1m%s\033[0m\n" "$*"; }
+    ok()   { printf "  \033[32m✓\033[0m %s\n" "$*"; }
+    info() { printf "  %s\n" "$*"; }
+    bold "Shutting down Black Oracle"
+    pkill -f "oracle.py"      2>/dev/null && ok "stopped oracle.py"      || info "oracle.py was not running"
+    pkill -f "dagster dev"    2>/dev/null && ok "stopped dagster"         || info "dagster was not running"
+    if $SHUTDOWN_OLLAMA; then
+        pkill -f "ollama serve" 2>/dev/null && ok "stopped ollama"        || info "ollama was not running"
+    else
+        info "ollama left running (pass --ollama to stop it too)"
+    fi
+    exit 0
+fi
 
 # In debug mode services log to the terminal; otherwise to /tmp files.
 redir_api=""
@@ -32,7 +53,7 @@ ok()   { printf "  \033[32m✓\033[0m %s\n" "$*"; }
 fail() { printf "  \033[31m✗\033[0m %s\n" "$*"; exit 1; }
 
 wait_for() {
-    local url="$1" label="$2" retries=30
+    local url="$1" label="$2" retries="${3:-30}"
     for i in $(seq 1 $retries); do
         if curl -sf "$url" >/dev/null 2>&1; then
             ok "$label is up"
@@ -41,6 +62,28 @@ wait_for() {
         sleep 1
     done
     fail "$label did not become ready after ${retries}s"
+}
+
+# Wait for a pattern to appear in a log file, then confirm via HTTP.
+# Falls back to a long HTTP-only poll when no log file is available (--debug).
+wait_for_api() {
+    local url="$1" log="$2" pattern="$3" label="$4"
+    if $DEBUG; then
+        wait_for "$url" "$label" 180
+        return
+    fi
+    local retries=180
+    info "waiting for model to load..."
+    for i in $(seq 1 $retries); do
+        if grep -q "$pattern" "$log" 2>/dev/null; then
+            break
+        fi
+        if [[ $i -eq $retries ]]; then
+            fail "$label: model did not finish loading after ${retries}s (check $log)"
+        fi
+        sleep 1
+    done
+    wait_for "$url" "$label"
 }
 
 cd "$SCRIPT_DIR"
@@ -71,7 +114,7 @@ if curl -sf "$API_URL/docs" >/dev/null 2>&1; then
 else
     info "starting..."
     eval "TOKENIZERS_PARALLELISM=false uv run python oracle.py $redir_api &"
-    wait_for "$API_URL/docs" "FastAPI"
+    wait_for_api "$API_URL/docs" /tmp/black-oracle-api.log "BertModel LOAD REPORT" "FastAPI"
 fi
 
 # ── Dagster (optional) ────────────────────────────────────────────────────────
