@@ -98,13 +98,13 @@ else
     wait_for "$OLLAMA_URL" "ollama"
 fi
 
-info "checking for llama3 model..."
-if ollama list 2>/dev/null | grep -q "^llama3"; then
-    ok "llama3 available"
+info "checking for gemma4:e4b model..."
+if ollama list 2>/dev/null | grep -q "^gemma4:e4b"; then
+    ok "gemma4:e4b available"
 else
-    info "pulling llama3 (this may take a while)..."
-    ollama pull llama3 || fail "failed to pull llama3"
-    ok "llama3 pulled"
+    info "pulling gemma4:e4b (this may take a while)..."
+    ollama pull gemma4:e4b || fail "failed to pull gemma4:e4b"
+    ok "gemma4:e4b pulled"
 fi
 
 # ── FastAPI / oracle.py ───────────────────────────────────────────────────────

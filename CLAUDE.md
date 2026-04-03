@@ -34,7 +34,7 @@ bash test_chat.sh
 
 ## External Dependencies
 
-- **Ollama**: Must be running at `http://localhost:11434` with `llama3` model pulled (`ollama pull llama3`)
+- **Ollama**: Must be running at `http://localhost:11434` with `gemma4:e4b` model pulled (`ollama pull gemma4:e4b`); override with `--model <name>` when starting `oracle.py`
 - **Data**: `./data/` is a symlink to `/home/maciek/obsidian-pkm` (Obsidian vault with `.md` files)
 - **ChromaDB**: Persisted locally at `./chroma_db/` (collection name: `local_docs`)
 

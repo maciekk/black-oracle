@@ -1,5 +1,5 @@
 OLLAMA_BASE_URL = "http://localhost:11434"
-OLLAMA_MODEL = "llama3"
+OLLAMA_MODEL = "gemma4:e4b"
 
 CHROMA_PERSIST_DIR = "./chroma_db"
 CHROMA_COLLECTION_NAME = "local_docs"

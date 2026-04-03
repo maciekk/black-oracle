@@ -1,3 +1,4 @@
+import argparse
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
@@ -7,6 +8,10 @@ from langchain_ollama import OllamaLLM
 from langchain_classic.chains import RetrievalQA, ConversationalRetrievalChain
 from langchain_core.prompts import PromptTemplate
 import config
+
+_parser = argparse.ArgumentParser(description="Black Oracle inference server")
+_parser.add_argument("--model", default=config.OLLAMA_MODEL, help="Ollama model to use (default: %(default)s)")
+_args, _ = _parser.parse_known_args()
 
 app = FastAPI(title="Production RAG API")
 
@@ -18,7 +23,7 @@ vector_db = Chroma(
 )
 
 llm = OllamaLLM(
-    model=config.OLLAMA_MODEL,
+    model=_args.model,
     base_url=config.OLLAMA_BASE_URL,
     temperature=0,
 )
