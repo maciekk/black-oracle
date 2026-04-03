@@ -285,10 +285,13 @@ class ChatPane(RichLog):
     def _write_oracle(self, text: str) -> None:
         from rich.console import Console
         from rich.markdown import Markdown
+        from rich.style import Style
         from rich.text import Text
+        from rich.theme import Theme
 
         render_width, pad = self._layout()
-        tmp = Console(width=render_width - 2, highlight=False)  # reserve 2 cols for "│ " prefix
+        _theme = Theme({"bold": Style(bold=True, color="#FFD700")})
+        tmp = Console(width=render_width - 2, highlight=False, theme=_theme)  # reserve 2 cols for "│ " prefix
         with tmp.capture() as cap:
             tmp.print(Markdown(text))
         rendered = cap.get().rstrip()
